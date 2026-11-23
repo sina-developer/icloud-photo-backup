@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-14   # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check Python syntax
+        run: python -m py_compile app/server.py
+
+      - name: Build app and DMG
+        run: PYTHON=python scripts/build.sh
+
+      - name: Smoke test the engine
+        run: |
+          ENGINE="dist/iCloud Photo Backup.app/Contents/Resources/engine"
+          "$ENGINE/icloudpd" --version
+          ICPB_PORT=0 "$ENGINE/icpb-engine" --native > engine.log 2>&1 &
+          for i in $(seq 1 30); do grep -q '^READY ' engine.log && break; sleep 1; done
+          cat engine.log
+          URL=$(grep '^READY ' engine.log | cut -d' ' -f2)
+          curl -fsS "$URL" | grep -q 'iCloud Photo Backup'
+          kill %1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dmg
+          path: dist/*.dmg*
+          retention-days: 14

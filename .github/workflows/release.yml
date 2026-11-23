@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14   # Apple Silicon runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches VERSION
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          FILE="$(tr -d '[:space:]' < VERSION)"
+          if [ "$TAG" != "$FILE" ]; then
+            echo "Tag v$TAG does not match VERSION $FILE" >&2
+            exit 1
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build app and DMG
+        run: PYTHON=python scripts/build.sh
+
+      - name: Extract release notes from CHANGELOG.md
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          awk -v v="$V" '
+            $0 ~ "^## \\[" v "\\]" { f=1; next }
+            /^## \[/ { f=0 }
+            /^\[.*\]: / { f=0 }
+            f { print }
+          ' CHANGELOG.md > notes.md
+          cat >> notes.md <<'EOF'
+
+          ---
+          **Install:** download the `.dmg`, drag the app to Applications, then open it and allow it in
+          *System Settings → Privacy & Security → Open Anyway* (the app isn't notarized).
+          Requires a Mac with an Apple chip and macOS 12 or later.
+          EOF
+          cat notes.md
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.dmg dist/*.dmg.sha256 \
+            --title "iCloud Photo Backup $GITHUB_REF_NAME" \
+            --notes-file notes.md

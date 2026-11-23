@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iCloud Photo Backup</title>
+<style>
+  :root {
+    --bg: #f5f5f7; --card: #ffffff; --text: #1d1d1f; --muted: #6e6e73; --line: #e3e3e8;
+    --accent: #0a7cff; --ok: #1f9d55; --warn: #c27c0e; --bad: #d93025; --track: #e9e9ee;
+    --field: #fafafc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111113; --card: #1c1c1f; --text: #f2f2f5; --muted: #9a9aa2; --line: #2c2c31;
+            --accent: #3d95ff; --ok: #3fbf72; --warn: #e0a23a; --bad: #ff6b5e; --track: #2a2a30; --field: #232327; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 48px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], input[type=email], input[type=password] {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--field); color: var(--text); font: inherit; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > input { flex: 1; }
+  button { font: inherit; border-radius: 8px; border: 1px solid var(--line); background: var(--field);
+           color: var(--text); padding: 8px 14px; cursor: pointer; white-space: nowrap; }
+  button:hover { filter: brightness(0.97); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; padding: 10px 22px; }
+  button.danger { color: var(--bad); }
+  button:disabled { opacity: .45; cursor: default; }
+  .opts { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 14px; }
+  .opts label { display: flex; gap: 7px; align-items: center; color: var(--text); font-size: 13px; margin: 0; }
+  select { font: inherit; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--line); background: var(--field); color: var(--text); }
+  .note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .warnbox { background: color-mix(in srgb, var(--warn) 12%, transparent); color: var(--text);
+             border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); border-radius: 8px; padding: 8px 11px; font-size: 13px; margin-top: 10px; }
+
+  .status { display: grid; grid-template-columns: 170px 1fr; gap: 26px; align-items: center; }
+  .ring { position: relative; width: 170px; height: 170px; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring .num b { font-size: 34px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .ring .num span { font-size: 12px; color: var(--muted); }
+  .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; padding: 3px 10px;
+          border-radius: 99px; background: var(--track); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .s-running .dot, .s-starting .dot { background: var(--accent); animation: pulse 1.4s infinite; }
+  .s-done .dot { background: var(--ok); } .s-error .dot { background: var(--bad); }
+  .s-paused .dot, .s-retrying .dot, .s-needs_input .dot, .s-pausing .dot { background: var(--warn); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none !important; } }
+  .msg { font-size: 16px; font-weight: 550; margin: 10px 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; min-height: 19px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar { height: 6px; background: var(--track); border-radius: 99px; overflow: hidden; margin: 14px 0 16px; }
+  .bar > div { height: 100%; width: 0; background: var(--accent); transition: width .6s ease; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat { border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 19px; font-weight: 620; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+  .prompt { border: 1px solid var(--accent); }
+  .disks { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .disk .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; gap: 10px; }
+  .disk .name { font-weight: 600; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .disk .name small { color: var(--muted); font-weight: 400; margin-left: 6px; }
+  .disk .cap { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .sbar { display: flex; height: 14px; border-radius: 5px; overflow: hidden; background: var(--track); }
+  .sbar > div { height: 100%; transition: width .6s ease; }
+  .seg-backup { background: var(--accent); } .seg-other { background: #8e8e96; }
+  .seg-need { background: repeating-linear-gradient(-45deg, color-mix(in srgb, var(--accent) 45%, transparent) 0 4px, transparent 4px 8px); }
+  .seg-over { background: var(--bad); }
+  .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+  .legend b { color: var(--text); font-weight: 600; }
+  .totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+  @media (max-width: 720px) { .disks, .totals { grid-template-columns: 1fr; } }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+  .thumbs .t { aspect-ratio: 1; border-radius: 8px; background: var(--track) center/cover no-repeat; position: relative; overflow: hidden; }
+  .thumbs .t .badge { position: absolute; right: 5px; bottom: 5px; font-size: 10px; font-weight: 700; color: #fff;
+                      background: rgba(0,0,0,.55); padding: 1px 5px; border-radius: 4px; }
+  .empty { color: var(--muted); font-size: 13px; }
+  .log { font: 12px/1.55 ui-monospace, "SF Mono", Menlo, monospace; max-height: 240px; overflow: auto;
+         background: var(--field); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; word-break: break-all; }
+  .log .error, .log .critical { color: var(--bad); } .log .warning { color: var(--warn); }
+  .log .app, .log .prompt { color: var(--accent); } .log .t { color: var(--muted); }
+  details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .hidden { display: none !important; }
+  /* Inside the Mac app window: title lives in the title bar, and the page feels like an app. */
+  html.native h1 { visibility: hidden; }
+  html.native .wrap { padding-top: 16px; }
+  html.native body { -webkit-user-select: none; user-select: none; cursor: default; }
+  html.native input, html.native .log { -webkit-user-select: text; user-select: text; }
+  @media (max-width: 720px) {
+    .grid2, .status { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); }
+    .ring { margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>iCloud Photo Backup</h1>
+    <div class="row">
+      <button id="openFolder" title="Show the backup folder in Finder">Show in Finder</button>
+      <button id="quit" class="danger" title="Stop the download and close the app">Quit</button>
+    </div>
+  </header>
+
+  <div id="noTool" class="card hidden"><b>icloudpd isn't installed.</b> Open Terminal and run <code>brew install icloudpd</code>, then reload this page.</div>
+
+  <section class="card" id="setup">
+    <h2>Setup</h2>
+    <div class="grid2">
+      <div>
+        <label for="user">Apple ID</label>
+        <input id="user" type="email" placeholder="name@icloud.com" autocomplete="username">
+      </div>
+      <div>
+        <label for="pass">Password <span id="passHint"></span></label>
+        <input id="pass" type="password" placeholder="Asked once, kept only while the app is open" autocomplete="current-password">
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label for="dir">Save photos to</label>
+      <div class="row">
+        <input id="dir" type="text" placeholder="/Volumes/YourSSD/iCloud Photos" spellcheck="false">
+        <button id="choose">Choose…</button>
+      </div>
+      <div id="internalWarn" class="warnbox hidden">This folder is on your Mac's internal disk, not your SSD. Plug in the SSD and choose a folder on it.</div>
+    </div>
+    <div class="opts">
+      <label><input type="checkbox" id="optVideos" checked> Videos</label>
+      <label><input type="checkbox" id="optLive" checked> Live Photo videos</label>
+      <label><input type="checkbox" id="optAdp"> Advanced Data Protection is on</label>
+      <label>Folders <select id="optFolders">
+        <option value="day">Year / Month / Day</option>
+        <option value="month">Year / Month</option>
+        <option value="none">One folder</option>
+      </select></label>
+    </div>
+    <div class="note">Downloads full-quality originals. Files already in the folder are skipped, so you can stop and continue at any time.</div>
+  </section>
+
+  <section class="card prompt hidden" id="promptCard">
+    <h2 id="promptTitle">iCloud is asking</h2>
+    <div class="row">
+      <input id="answer" type="text" autocomplete="one-time-code" inputmode="numeric">
+      <button class="primary" id="send">Continue</button>
+    </div>
+    <div class="note" id="promptRaw"></div>
+  </section>
+
+  <section class="card">
+    <div class="status">
+      <div class="ring">
+        <svg width="170" height="170" viewBox="0 0 170 170" aria-hidden="true">
+          <circle cx="85" cy="85" r="74" fill="none" stroke="var(--track)" stroke-width="12"/>
+          <circle id="arc" cx="85" cy="85" r="74" fill="none" stroke="var(--accent)" stroke-width="12"
+                  stroke-linecap="round" stroke-dasharray="465 465" stroke-dashoffset="465" style="transition: stroke-dashoffset .6s ease"/>
+        </svg>
+        <div class="num"><b id="pct">–</b><span id="pctSub">not started</span></div>
+      </div>
+      <div>
+        <span class="pill s-idle" id="pill"><span class="dot"></span><span id="stateText">Ready</span></span>
+        <div class="msg" id="message">Ready.</div>
+        <div class="sub" id="current"></div>
+        <div class="bar"><div id="barFill"></div></div>
+        <div class="controls">
+          <button class="primary" id="start">Start backup</button>
+          <button id="pause" class="hidden">Pause</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="stats">
+      <div class="stat"><div class="k">Items done</div><div class="v" id="sDone">0</div></div>
+      <div class="stat"><div class="k">Downloaded now</div><div class="v" id="sDown">0</div></div>
+      <div class="stat"><div class="k">Already on SSD</div><div class="v" id="sSkip">0</div></div>
+      <div class="stat"><div class="k">Errors</div><div class="v" id="sErr">0</div></div>
+      <div class="stat"><div class="k">Files in folder</div><div class="v" id="sFiles">0</div></div>
+      <div class="stat"><div class="k">Size in folder</div><div class="v" id="sBytes">0 B</div></div>
+      <div class="stat"><div class="k">Speed</div><div class="v" id="sSpeed">–</div></div>
+      <div class="stat"><div class="k">Time left</div><div class="v" id="sEta">–</div></div>
+    </div>
+    <div class="note" id="freeNote"></div>
+  </section>
+
+  <section class="card">
+    <h2>Storage</h2>
+    <div class="disks">
+      <div class="disk">
+        <div class="head"><div class="name">This Mac <small id="macName"></small></div><div class="cap" id="macCap"></div></div>
+        <div class="sbar"><div class="seg-other" id="macUsed"></div></div>
+        <div class="legend">
+          <span><i class="seg-other"></i>Used <b id="macUsedTxt">–</b></span>
+          <span><i style="background:var(--track)"></i>Free <b id="macFreeTxt">–</b></span>
+        </div>
+      </div>
+      <div class="disk">
+        <div class="head"><div class="name">Backup drive <small id="tgtName"></small></div><div class="cap" id="tgtCap"></div></div>
+        <div class="sbar" id="tgtBar">
+          <div class="seg-backup" id="tgtBackup"></div><div class="seg-other" id="tgtOther"></div><div class="seg-need" id="tgtNeed"></div>
+        </div>
+        <div class="legend">
+          <span><i class="seg-backup"></i>Photos backup <b id="tgtBackupTxt">–</b></span>
+          <span><i class="seg-other"></i>Other files <b id="tgtOtherTxt">–</b></span>
+          <span id="needLegend" class="hidden"><i class="seg-need"></i>Still to download <b id="tgtNeedTxt">–</b></span>
+          <span><i style="background:var(--track)"></i>Free <b id="tgtFreeTxt">–</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="totals">
+      <div class="stat"><div class="k">Backed up so far</div><div class="v" id="tBackup">–</div></div>
+      <div class="stat"><div class="k">Whole library (estimate)</div><div class="v" id="tEst">–</div></div>
+      <div class="stat"><div class="k">Free on backup drive</div><div class="v" id="tFree">–</div></div>
+    </div>
+    <div id="spaceWarn" class="warnbox hidden"></div>
+  </section>
+
+  <section class="card">
+    <h2>Latest in your backup</h2>
+    <div class="thumbs" id="thumbs"></div>
+    <div class="empty" id="noThumbs">Photos will appear here as they arrive.</div>
+  </section>
+
+  <footer class="note" style="text-align:center;margin-top:4px">
+    iCloud Photo Backup <span id="version"></span> · open source, built on icloudpd · not affiliated with Apple
+  </footer>
+
+  <section class="card">
+    <details id="logBox">
+      <summary>Activity log <span id="errHint"></span></summary>
+      <div class="log" id="log" style="margin-top:10px"></div>
+    </details>
+  </section>
+</div>
+
+<script>
+const TOKEN = "__TOKEN__";
+const $ = id => document.getElementById(id);
+const STATE_LABEL = { idle: "Ready", starting: "Connecting", running: "Downloading", needs_input: "Waiting for you",
+  pausing: "Pausing", paused: "Paused", done: "Complete", error: "Stopped", retrying: "Retrying" };
+let last = null, formTouched = false, thumbKeys = "";
+
+async function api(path, body) {
+  const r = await fetch(path, { method: body === undefined ? "GET" : "POST",
+    headers: { "X-Token": TOKEN, "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body) });
+  return r.json();
+}
+function fmtBytes(n) {
+  if (n == null) return "–";
+  const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return (i < 2 ? Math.round(n) : n.toFixed(1)) + " " + u[i];
+}
+function fmtNum(n) { return (n ?? 0).toLocaleString(); }
+function fmtDur(s) {
+  if (s == null || !isFinite(s)) return "–";
+  s = Math.round(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+  if (h > 48) return Math.round(h / 24) + " days";
+  if (h) return h + " h " + m + " min"; if (m) return m + " min"; return "< 1 min";
+}
+function options() {
+  return { skip_videos: !$("optVideos").checked, skip_live_photos: !$("optLive").checked,
+           adp: $("optAdp").checked, folder_structure: $("optFolders").value };
+}
+function escapeHtml(s) { return s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+function render(s) {
+  last = s;
+  $("version").textContent = s.version ? "v" + s.version : "";
+  $("noTool").classList.toggle("hidden", s.icloudpd);
+  if (!formTouched) {
+    if (s.username && !$("user").value) $("user").value = s.username;
+    if (s.directory && !$("dir").value) $("dir").value = s.directory;
+    const o = s.options || {};
+    $("optVideos").checked = !o.skip_videos; $("optLive").checked = !o.skip_live_photos;
+    $("optAdp").checked = !!o.adp; $("optFolders").value = o.folder_structure || "day";
+  }
+  $("passHint").textContent = s.have_password ? "· remembered for this session" : "";
+  $("internalWarn").classList.toggle("hidden", !s.on_internal_disk || !$("dir").value);
+
+  const active = ["starting", "running", "needs_input", "pausing"].includes(s.state);
+  $("setup").querySelectorAll("input,select,button").forEach(el => el.disabled = active);
+  $("pill").className = "pill s-" + s.state;
+  $("stateText").textContent = STATE_LABEL[s.state] || s.state;
+  let msg = s.message;
+  if (s.state === "retrying" && s.retry_in != null) msg = `Connection problem. Retrying in ${s.retry_in} s (attempt ${s.retries + 1}).`;
+  $("message").textContent = msg;
+  $("current").textContent = s.state === "running" && s.current ? "Now: " + s.current : "";
+
+  const pct = s.percent;
+  $("pct").textContent = pct == null ? "–" : (pct >= 99.95 ? "100" : pct.toFixed(pct < 10 ? 1 : 0)) + "%";
+  $("pctSub").textContent = s.total ? `${fmtNum(s.processed)} of ${fmtNum(s.total)}` : (s.processed ? fmtNum(s.processed) + " items" : (active ? "counting…" : "not started"));
+  $("arc").setAttribute("stroke-dashoffset", 465 * (1 - (pct || 0) / 100));
+  $("arc").setAttribute("stroke", s.state === "done" ? "var(--ok)" : "var(--accent)");
+  $("barFill").style.width = (pct || 0) + "%";
+  $("barFill").style.background = s.state === "done" ? "var(--ok)" : "var(--accent)";
+
+  $("start").classList.toggle("hidden", active);
+  $("start").textContent = ["paused", "error", "retrying"].includes(s.state) ? "Resume" : (s.state === "done" ? "Check again" : "Start backup");
+  $("pause").classList.toggle("hidden", !(active || s.state === "retrying"));
+  $("pause").disabled = s.state === "pausing";
+  $("pause").textContent = s.state === "pausing" ? "Pausing…" : "Pause";
+
+  $("sDone").textContent = fmtNum(s.processed);
+  $("sDown").textContent = fmtNum(s.downloaded);
+  $("sSkip").textContent = fmtNum(s.skipped);
+  $("sErr").textContent = fmtNum(s.error_count);
+  $("sFiles").textContent = fmtNum(s.disk_files);
+  $("sBytes").textContent = fmtBytes(s.disk_bytes);
+  $("sSpeed").textContent = s.state === "running" && s.bytes_per_sec > 0 ? fmtBytes(s.bytes_per_sec) + "/s" : "–";
+  $("sEta").textContent = fmtDur(s.eta_seconds);
+  $("freeNote").textContent = "";
+  renderStorage(s);
+
+  // prompt
+  const p = s.prompt;
+  $("promptCard").classList.toggle("hidden", !p);
+  if (p) {
+    $("promptTitle").textContent = p.text;
+    $("answer").type = p.secret ? "password" : "text";
+    $("promptRaw").textContent = p.raw && /index/.test(p.raw) ? "No code on your devices? Type a and press Continue to get it by SMS." : "";
+    if (document.activeElement !== $("answer")) $("answer").focus();
+  }
+
+  // thumbnails
+  const keys = s.recent.map(r => r.path).join("|");
+  if (keys !== thumbKeys) {
+    thumbKeys = keys;
+    $("thumbs").innerHTML = s.recent.map(r =>
+      `<div class="t" title="${escapeHtml(r.name)}" style="background-image:url('/thumb?token=${TOKEN}&p=${encodeURIComponent(r.path)}')">${r.video ? '<span class="badge">VIDEO</span>' : ""}</div>`).join("");
+  }
+  $("noThumbs").classList.toggle("hidden", s.recent.length > 0);
+
+  // log
+  $("errHint").textContent = s.error_count ? `· ${s.error_count} error${s.error_count > 1 ? "s" : ""}` : "";
+  const logEl = $("log"), atBottom = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 8;
+  logEl.innerHTML = s.log.map(l => `<div class="${l.level}"><span class="t">${l.t}</span> ${escapeHtml(l.text)}</div>`).join("") || "Nothing yet.";
+  if (atBottom) logEl.scrollTop = logEl.scrollHeight;
+}
+
+function pctOf(part, whole) { return whole > 0 ? Math.max(0, Math.min(100, 100 * part / whole)) + "%" : "0%"; }
+
+function renderStorage(s) {
+  const m = s.mac_disk;
+  if (m) {
+    $("macName").textContent = m.name;
+    $("macCap").textContent = `${fmtBytes(m.free)} free of ${fmtBytes(m.total)}`;
+    $("macUsed").style.width = pctOf(m.used, m.total);
+    $("macUsedTxt").textContent = fmtBytes(m.used);
+    $("macFreeTxt").textContent = fmtBytes(m.free);
+  }
+
+  const t = s.target_disk;
+  const backup = s.disk_bytes || 0;
+  const est = s.estimated_total_bytes;
+  const need = est != null ? Math.max(0, est - backup) : null;
+  $("tBackup").textContent = fmtBytes(backup);
+  $("tEst").textContent = est != null ? "≈ " + fmtBytes(est) : (s.total ? "measuring…" : "–");
+  $("tFree").textContent = t ? fmtBytes(t.free) : "–";
+
+  if (!t) {
+    $("tgtName").textContent = "no folder chosen";
+    $("tgtCap").textContent = "";
+    ["tgtBackup", "tgtOther", "tgtNeed"].forEach(id => $(id).style.width = "0%");
+    ["tgtBackupTxt", "tgtOtherTxt", "tgtFreeTxt"].forEach(id => $(id).textContent = "–");
+    $("needLegend").classList.add("hidden");
+    $("spaceWarn").classList.add("hidden");
+    return;
+  }
+  const other = Math.max(0, t.used - backup);
+  $("tgtName").textContent = t.name;
+  $("tgtCap").textContent = `${fmtBytes(t.free)} free of ${fmtBytes(t.total)}`;
+  $("tgtBackup").style.width = pctOf(Math.min(backup, t.used), t.total);
+  $("tgtOther").style.width = pctOf(other, t.total);
+  const fits = need == null || need <= t.free;
+  $("tgtNeed").className = fits ? "seg-need" : "seg-over";
+  $("tgtNeed").style.width = need ? pctOf(Math.min(need, t.free), t.total) : "0%";
+  $("tgtBackupTxt").textContent = fmtBytes(backup);
+  $("tgtOtherTxt").textContent = fmtBytes(other);
+  $("tgtFreeTxt").textContent = fmtBytes(t.free);
+  $("needLegend").classList.toggle("hidden", !need);
+  if (need) $("tgtNeedTxt").textContent = "≈ " + fmtBytes(need);
+
+  const warn = $("spaceWarn");
+  if (!fits) {
+    warn.textContent = `Not enough space: about ${fmtBytes(need)} is still to download, but only ${fmtBytes(t.free)} is free on ${t.name}. Free up space or choose a bigger drive.`;
+    warn.classList.remove("hidden");
+  } else if (t.free < 2 * 1024 ** 3) {
+    warn.textContent = `Only ${fmtBytes(t.free)} left on ${t.name}.`;
+    warn.classList.remove("hidden");
+  } else warn.classList.add("hidden");
+}
+
+async function poll() {
+  try { render(await api("/api/state")); }
+  catch (e) { $("message").textContent = "The app isn't running. Open iCloud Photo Backup again."; $("pill").className = "pill s-error"; $("stateText").textContent = "Closed"; }
+  setTimeout(poll, 1000);
+}
+
+["user", "dir", "optVideos", "optLive", "optAdp", "optFolders"].forEach(id => $(id).addEventListener("input", () => formTouched = true));
+const NATIVE = !!(window.ICPB_NATIVE && window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.native);
+window.nativeFolderChosen = path => { $("dir").value = path; formTouched = true; if (last) render(last); };
+$("choose").onclick = async () => {
+  if (NATIVE) { window.webkit.messageHandlers.native.postMessage({ action: "chooseFolder", current: $("dir").value }); return; }
+  const r = await api("/api/choose-folder", {}); if (r.directory) { $("dir").value = r.directory; formTouched = true; }
+};
+$("start").onclick = async () => {
+  const r = await api("/api/start", { username: $("user").value, directory: $("dir").value, password: $("pass").value, options: options() });
+  if (r.error) alert(r.error); else { $("pass").value = ""; formTouched = false; }
+};
+$("pause").onclick = () => api("/api/pause", {});
+$("send").onclick = async () => { const v = $("answer").value; if (!v) return; $("answer").value = ""; const r = await api("/api/answer", { text: v }); if (r.error) alert(r.error); };
+$("answer").addEventListener("keydown", e => { if (e.key === "Enter") $("send").click(); });
+$("openFolder").onclick = () => api("/api/open-folder", {});
+$("quit").onclick = async () => {
+  if (NATIVE) { window.webkit.messageHandlers.native.postMessage({ action: "quit" }); return; }
+  if (last && ["running", "starting", "needs_input"].includes(last.state) && !confirm("Stop the download and quit? You can continue later.")) return;
+  await api("/api/quit", {}); document.body.innerHTML = '<div class="wrap"><h1>iCloud Photo Backup closed</h1><p class="note">Open the app again to continue where you left off.</p></div>';
+};
+poll();
+</script>
+</body>
+</html>

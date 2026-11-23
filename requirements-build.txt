@@ -1,0 +1,4 @@
+# Build-time dependencies, pinned for reproducible releases.
+# icloudpd's wheel ships a standalone binary that is bundled into the app.
+icloudpd==1.34.0
+pyinstaller==6.22.3

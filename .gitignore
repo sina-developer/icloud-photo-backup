@@ -1,0 +1,14 @@
+# Build output
+.build/
+dist/
+*.app
+*.dmg
+*.dmg.zip
+*.dmg.sha256
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

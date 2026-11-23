@@ -1,0 +1,137 @@
+<!doctype html>
+<!-- Source for docs/assets/cover.png (1280x640). Render with scripts/render_cover.sh -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+    color: #f4f6fb;
+    background:
+      radial-gradient(900px 520px at 88% 8%, rgba(46,140,255,.30), transparent 62%),
+      radial-gradient(700px 500px at 0% 100%, rgba(20,80,200,.22), transparent 60%),
+      #0b1020;
+    display: flex; align-items: center; padding: 0 64px 0 76px; gap: 56px;
+  }
+  .left { width: 470px; flex: none; }
+  .icon { width: 96px; height: 96px; display: block; margin-left: -8px; filter: drop-shadow(0 12px 26px rgba(10,124,255,.35)); }
+  h1 { font-size: 54px; line-height: 1.04; font-weight: 750; letter-spacing: -0.03em; margin-top: 22px; }
+  p.tag { font-size: 21px; line-height: 1.45; color: #aab3c8; margin-top: 16px; }
+  p.tag b { color: #e7ecf7; font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .chip { font-size: 14px; font-weight: 600; color: #cfd7ea; padding: 7px 12px; border-radius: 99px;
+          background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10); }
+  .foot { margin-top: 30px; font-size: 13px; color: #6f7a93; letter-spacing: .01em; }
+
+  /* App window mock */
+  .win { flex: 1; height: 548px; border-radius: 14px; background: #17181c; overflow: hidden;
+         border: 1px solid rgba(255,255,255,.09);
+         box-shadow: 0 40px 80px rgba(0,0,0,.55), 0 0 0 1px rgba(0,0,0,.4); transform: rotate(-1.2deg); }
+  .bar { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #232429;
+         border-bottom: 1px solid rgba(255,255,255,.06); font-size: 12.5px; font-weight: 600; color: #a7a9b2; }
+  .bar i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .bar .t { flex: 1; text-align: center; margin-right: 52px; }
+  .body { padding: 16px; display: grid; gap: 12px; }
+  .card { background: #1f2025; border: 1px solid #2c2d33; border-radius: 11px; padding: 16px; }
+  .status { display: flex; gap: 22px; align-items: center; }
+  .ring { position: relative; width: 118px; height: 118px; flex: none; }
+  .ring svg { transform: rotate(-90deg); }
+  .ring .n { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .ring b { font-size: 27px; font-weight: 700; letter-spacing: -0.02em; }
+  .ring span { font-size: 10.5px; color: #8d909b; margin-top: 1px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; padding: 3px 9px;
+          border-radius: 99px; background: #2a2b31; color: #dfe3ee; }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: #3d95ff; display: inline-block; }
+  .msg { font-size: 15px; font-weight: 600; margin: 9px 0 3px; }
+  .sub { font-size: 11.5px; color: #8d909b; }
+  .pbar { height: 5px; background: #2a2b31; border-radius: 9px; margin: 12px 0; overflow: hidden; }
+  .pbar div { width: 64%; height: 100%; background: #3d95ff; border-radius: 9px; }
+  .btns { display: flex; gap: 7px; }
+  .btn { font-size: 11.5px; font-weight: 600; padding: 6px 13px; border-radius: 7px; background: #2a2b31; border: 1px solid #34353c; color: #e4e6ee; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .st { border: 1px solid #2c2d33; border-radius: 8px; padding: 8px 10px; }
+  .st .k { font-size: 10px; color: #8d909b; }
+  .st .v { font-size: 15px; font-weight: 650; margin-top: 1px; font-variant-numeric: tabular-nums; }
+  .h { font-size: 10.5px; font-weight: 600; color: #8d909b; margin-bottom: 9px; }
+  .disks { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .dh { display: flex; justify-content: space-between; font-size: 11.5px; margin-bottom: 6px; }
+  .dh span { color: #8d909b; font-size: 10.5px; }
+  .sb { display: flex; height: 10px; border-radius: 4px; overflow: hidden; background: #2a2b31; }
+  .sb .a { background: #3d95ff; } .sb .o { background: #6e6f78; }
+  .sb .n { background: repeating-linear-gradient(-45deg, rgba(61,149,255,.45) 0 3px, transparent 3px 6px); }
+  .thumbs { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
+  .th { aspect-ratio: 1; border-radius: 6px; }
+</style>
+</head>
+<body>
+  <div class="left">
+    <img class="icon" src="assets/icon.png" alt="">
+    <h1>iCloud Photo<br>Backup</h1>
+    <p class="tag">Download <b>every photo and video</b> from iCloud to your own drive, at full quality. Pause any time, pick up where you left off.</p>
+    <div class="chips">
+      <span class="chip">Original quality</span>
+      <span class="chip">Pause &amp; resume</span>
+      <span class="chip">Storage overview</span>
+      <span class="chip">Nothing to install</span>
+    </div>
+    <div class="foot">Free &amp; open source for macOS · not affiliated with Apple</div>
+  </div>
+
+  <div class="win">
+    <div class="bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">iCloud Photo Backup</span></div>
+    <div class="body">
+      <div class="card status">
+        <div class="ring">
+          <svg width="118" height="118" viewBox="0 0 118 118">
+            <circle cx="59" cy="59" r="51" fill="none" stroke="#2a2b31" stroke-width="9"/>
+            <circle cx="59" cy="59" r="51" fill="none" stroke="#3d95ff" stroke-width="9" stroke-linecap="round"
+                    stroke-dasharray="320.4 320.4" stroke-dashoffset="115.3"/>
+          </svg>
+          <div class="n"><b>64%</b><span>of 18,502</span></div>
+        </div>
+        <div style="flex:1">
+          <span class="pill"><i></i>Downloading</span>
+          <div class="msg">Downloading…</div>
+          <div class="sub">Now: IMG_4821.HEIC</div>
+          <div class="pbar"><div></div></div>
+          <div class="btns"><span class="btn">Pause</span></div>
+        </div>
+      </div>
+      <div class="card stats">
+        <div class="st"><div class="k">Items done</div><div class="v">11,840</div></div>
+        <div class="st"><div class="k">Speed</div><div class="v">38.2 MB/s</div></div>
+        <div class="st"><div class="k">Time left</div><div class="v">42 min</div></div>
+        <div class="st"><div class="k">Errors</div><div class="v">0</div></div>
+      </div>
+      <div class="card">
+        <div class="h">Storage</div>
+        <div class="disks">
+          <div>
+            <div class="dh">This Mac <span>68.6 GB free of 460 GB</span></div>
+            <div class="sb"><div class="o" style="width:85%"></div></div>
+          </div>
+          <div>
+            <div class="dh">Samsung T7 <span>1.42 TB free of 2 TB</span></div>
+            <div class="sb"><div class="a" style="width:21%"></div><div class="o" style="width:8%"></div><div class="n" style="width:12%"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="h">Latest in your backup</div>
+        <div class="thumbs">
+          <div class="th" style="background:linear-gradient(160deg,#f6c27a,#e0735a 55%,#5b3b72)"></div>
+          <div class="th" style="background:linear-gradient(180deg,#8ecdf0,#3f86c6 60%,#1f4d7a)"></div>
+          <div class="th" style="background:linear-gradient(150deg,#b9e3a6,#4f9a66 60%,#22513f)"></div>
+          <div class="th" style="background:linear-gradient(170deg,#ffd9a3,#f29a76 50%,#a34f6b)"></div>
+          <div class="th" style="background:linear-gradient(190deg,#d6dbe6,#8c97ab 60%,#3d4658)"></div>
+          <div class="th" style="background:linear-gradient(160deg,#9ee6e0,#2fa7a3 55%,#155a63)"></div>
+          <div class="th" style="background:linear-gradient(170deg,#ffe7a1,#e3b54c 55%,#8a6420)"></div>
+          <div class="th" style="background:linear-gradient(150deg,#c9b6f2,#7c66c9 55%,#3a2f6d)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
