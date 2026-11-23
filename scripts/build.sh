@@ -15,17 +15,26 @@ APP="$DIST/$APP_NAME.app"
 DMG="$DIST/iCloud-Photo-Backup-$VERSION-$ARCH.dmg"
 BUILD="$ROOT/.build"
 VENV="$BUILD/venv"
-PYTHON="${PYTHON:-python3}"
+MIN_MACOS="12.0"   # oldest macOS the app supports
 
-echo "==> Building $APP_NAME $VERSION ($ARCH)"
+# The bundled Python must run on MIN_MACOS. Homebrew's Python is built only for the
+# macOS it was installed on, so prefer the python.org installer's Python when present.
+if [ -z "${PYTHON:-}" ]; then
+  PYTHON="$(ls /Library/Frameworks/Python.framework/Versions/3.1[0-9]/bin/python3 2>/dev/null | sort -V | tail -1 || true)"
+  PYTHON="${PYTHON:-python3}"
+fi
+export MACOSX_DEPLOYMENT_TARGET="$MIN_MACOS"
+
+echo "==> Building $APP_NAME $VERSION ($ARCH) with $("$PYTHON" -c 'import sys; print(sys.executable)')"
 
 # 1. Build environment (pinned versions in requirements-build.txt)
-if [ ! -x "$VENV/bin/pyinstaller" ] || ! cmp -s requirements-build.txt "$VENV/.requirements"; then
+STAMP="$(cat requirements-build.txt; "$PYTHON" -c 'import sys; print(sys.executable, sys.version)')"
+if [ ! -x "$VENV/bin/pyinstaller" ] || [ "$STAMP" != "$(cat "$VENV/.stamp" 2>/dev/null)" ]; then
   rm -rf "$VENV"
   "$PYTHON" -m venv "$VENV"
   "$VENV/bin/pip" install -q --upgrade pip
   "$VENV/bin/pip" install -q -r requirements-build.txt
-  cp requirements-build.txt "$VENV/.requirements"
+  echo "$STAMP" > "$VENV/.stamp"
 fi
 
 # 2. Freeze the server with its own Python, and add the official standalone
@@ -41,6 +50,18 @@ ICLOUDPD_DIR="$("$VENV/bin/python" -c 'import icloudpd, os; print(os.path.dirnam
 cp "$ICLOUDPD_DIR/icloudpd" "$BUILD/dist/icpb-engine/icloudpd"
 chmod +x "$BUILD/dist/icpb-engine/icloudpd"
 
+# Guard: every binary in the engine must run on MIN_MACOS, or the app fails on
+# older Macs with "The backup engine stopped unexpectedly (code 255)".
+TOO_NEW="$(find "$BUILD/dist/icpb-engine" -type f \( -perm -u+x -o -name '*.so' -o -name '*.dylib' -o -name Python \) -print0 |
+  xargs -0 -n1 sh -c 'v=$(otool -l "$0" 2>/dev/null | grep -A4 LC_BUILD_VERSION | awk "/minos/{print \$2; exit}"); [ -n "$v" ] && echo "$v $0"' |
+  awk -v min="$MIN_MACOS" '{ split($1,a,"."); split(min,b,"."); if (a[1]+0 > b[1]+0 || (a[1]+0 == b[1]+0 && a[2]+0 > b[2]+0)) print }')"
+if [ -n "$TOO_NEW" ]; then
+  echo "ERROR: these files need a newer macOS than $MIN_MACOS:" >&2
+  echo "$TOO_NEW" | head -5 >&2
+  echo "Build with Python from python.org (https://www.python.org/downloads/macos/), e.g. PYTHON=/Library/Frameworks/Python.framework/Versions/3.12/bin/python3" >&2
+  exit 1
+fi
+
 # 3. App bundle
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/licenses"
@@ -53,7 +74,7 @@ ICLOUDPD_LICENSE="$(find "$VENV/lib" -path '*icloudpd-*.dist-info/licenses/LICEN
 [ -n "$ICLOUDPD_LICENSE" ] && cp "$ICLOUDPD_LICENSE" "$APP/Contents/Resources/licenses/icloudpd-LICENSE.md"
 
 # Native window app (Swift + WebKit) that runs the engine and shows its interface.
-swiftc -O -target "$ARCH-apple-macos12.0" \
+swiftc -O -target "$ARCH-apple-macos$MIN_MACOS" \
   -framework Cocoa -framework WebKit \
   -o "$APP/Contents/MacOS/iCloudPhotoBackup" "$ROOT/app/main.swift"
 
@@ -69,7 +90,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleExecutable</key><string>iCloudPhotoBackup</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
-  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSHumanReadableCopyright</key><string>Developed by c-na.dev · MIT License. Not affiliated with Apple Inc.</string>
 </dict></plist>

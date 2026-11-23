@@ -6,6 +6,14 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-11-23
+
+### Fixed
+- When the backup engine can't start, the app now explains why, shows the last lines of the log,
+  and offers Open Full Log and Get Latest Version buttons, instead of only "code 255".
+- The build now refuses to produce an app that needs a newer macOS than 12. Builds made with
+  Homebrew's Python only ran on the Mac that built them and failed elsewhere with code 255.
+
 ## [1.0.2] - 2026-11-23
 
 ### Added
@@ -38,7 +46,8 @@ First public release.
 - Options for videos, Live Photo videos, Advanced Data Protection and folder layout.
 - Native folder picker, with a warning when the folder is on the Mac's internal disk.
 
-[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.3...HEAD
+[1.0.3]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/sina-developer/icloud-photo-backup/releases/tag/v1.0.0

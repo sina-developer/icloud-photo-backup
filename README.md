@@ -107,7 +107,10 @@ See [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ## Build from source
 
-You need Xcode (or the Command Line Tools) and Python 3.10 or newer.
+You need Xcode (or the Command Line Tools) and Python 3.10 or newer **from
+[python.org](https://www.python.org/downloads/macos/)**. Homebrew's Python only runs on the
+macOS version it was installed on, so an app built with it fails on older Macs; the build
+script checks for this and stops with an error.
 
 ```bash
 git clone https://github.com/sina-developer/icloud-photo-backup.git
@@ -116,7 +119,8 @@ scripts/build.sh
 ```
 
 This creates `dist/iCloud Photo Backup.app` and `dist/iCloud-Photo-Backup-<version>-arm64.dmg`.
-Set `PYTHON=/path/to/python3` to choose which Python creates the build environment.
+The build script uses python.org's Python automatically when it's installed. Set
+`PYTHON=/path/to/python3` to choose a different one. The official releases are built by GitHub Actions.
 
 To work on the interface without building, install icloudpd (`brew install icloudpd`) and run:
 

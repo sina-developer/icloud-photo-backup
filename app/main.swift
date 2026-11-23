@@ -14,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var engineURL: URL?
     var allowClose = false
     var logHandle: FileHandle?
+    var engineOutput = ""   // recent engine output, shown if it stops unexpectedly
 
     func applicationDidFinishLaunching(_ note: Notification) {
         buildMenu()
@@ -119,7 +120,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
             let data = h.availableData
             guard !data.isEmpty, let self = self else { return }
             self.logHandle?.write(data)
-            guard self.engineURL == nil, let text = String(data: data, encoding: .utf8) else { return }
+            guard let text = String(data: data, encoding: .utf8) else { return }
+            DispatchQueue.main.async {
+                self.engineOutput = String((self.engineOutput + text).suffix(3000))
+            }
+            guard self.engineURL == nil else { return }
             for line in text.split(separator: "\n") where line.hasPrefix("READY ") {
                 if let url = URL(string: String(line.dropFirst(6)).trimmingCharacters(in: .whitespaces)) {
                     self.engineURL = url
@@ -128,10 +133,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
             }
         }
         p.terminationHandler = { [weak self] proc in
-            DispatchQueue.main.async {
+            // Give the output reader a moment to deliver the last lines.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 guard let self = self, !self.allowClose else { return }
-                self.webView.loadHTMLString(self.loadingHTML(
-                    "The backup engine stopped unexpectedly (code \(proc.terminationStatus)). Please reopen the app."), baseURL: nil)
+                self.webView.loadHTMLString(self.engineErrorHTML(code: proc.terminationStatus), baseURL: nil)
             }
         }
         do {
@@ -140,6 +145,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         } catch {
             webView.loadHTMLString(loadingHTML("Could not start the backup engine: \(error.localizedDescription)"), baseURL: nil)
         }
+    }
+
+    var logURL: URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/iCloudPhotoBackup/app.log")
+    }
+
+    /// Explains why the engine stopped, with the last lines of its output.
+    func engineErrorHTML(code: Int32) -> String {
+        let os = ProcessInfo.processInfo.operatingSystemVersionString
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let hint: String
+        if code == 255 || engineOutput.contains("Failed to load Python") || engineOutput.contains("Library not loaded") {
+            hint = """
+            The app's built-in Python couldn't start on this Mac. This usually means the copy you have \
+            was built for a newer macOS than this Mac runs (\(os)). Download the latest version from \
+            <b>github.com/sina-developer/icloud-photo-backup/releases</b>. If that copy also fails, macOS may be \
+            blocking it: in Terminal run <code>xattr -dr com.apple.quarantine "/Applications/iCloud Photo Backup.app"</code>, then reopen the app.
+            """
+        } else {
+            hint = "Please reopen the app. If it keeps happening, report it on GitHub with the details below."
+        }
+        let tail = engineOutput
+            .split(separator: "\n", omittingEmptySubsequences: false).suffix(12).joined(separator: "\n")
+            .replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+        return """
+        <html><head><style>
+          body { margin: 0; padding: 48px; font: 14px/1.5 -apple-system; color: #1d1d1f; background: #fff; }
+          @media (prefers-color-scheme: dark) { body { color: #f2f2f5; background: #1c1c1f; } pre { background: #111 !important; } }
+          h2 { margin: 0 0 10px; font-size: 20px; }
+          p { max-width: 640px; color: #6e6e73; }
+          code { font: 12px ui-monospace, Menlo, monospace; }
+          pre { font: 12px/1.5 ui-monospace, Menlo, monospace; background: #f5f5f7; padding: 12px 14px;
+                border-radius: 8px; white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow: auto; }
+          button { font: inherit; padding: 7px 14px; border-radius: 8px; border: 1px solid #ccc; background: transparent;
+                   color: inherit; cursor: pointer; margin-right: 8px; }
+        </style></head><body>
+          <h2>The backup engine stopped (code \(code))</h2>
+          <p>\(hint)</p>
+          <p style="font-size:12px">App \(version) · \(os)</p>
+          \(tail.isEmpty ? "" : "<pre>\(tail)</pre>")
+          <button onclick="webkit.messageHandlers.native.postMessage({action:'openLog'})">Open Full Log</button>
+          <button onclick="webkit.messageHandlers.native.postMessage({action:'openReleases'})">Get Latest Version</button>
+        </body></html>
+        """
     }
 
     func stopEngine() {
@@ -206,6 +257,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
             }
         case "quit":
             NSApp.terminate(nil)
+        case "openLog":
+            NSWorkspace.shared.open(logURL)
+        case "openReleases":
+            NSWorkspace.shared.open(URL(string: "https://github.com/sina-developer/icloud-photo-backup/releases/latest")!)
         default:
             break
         }
