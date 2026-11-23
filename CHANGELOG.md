@@ -6,6 +6,9 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Release builds now run on the current macOS GitHub runner, so the DMG is published automatically. v1.0.0 was tagged but never released; it is identical apart from this fix.
+
 ## [1.0.0] - 2026-11-23
 
 First public release.
@@ -27,5 +30,6 @@ First public release.
 - Options for videos, Live Photo videos, Advanced Data Protection and folder layout.
 - Native folder picker, with a warning when the folder is on the Mac's internal disk.
 
-[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/sina-developer/icloud-photo-backup/releases/tag/v1.0.0
