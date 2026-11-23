@@ -6,6 +6,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-11-23
+
 ### Fixed
 - Release builds now run on the current macOS GitHub runner, so the DMG is published automatically. v1.0.0 was tagged but never released; it is identical apart from this fix.
 
