@@ -14,6 +14,8 @@ Useful when you're cancelling your iCloud storage plan, or just want your own co
 library. It uses the proven open-source downloader [icloudpd] underneath, with a friendly
 window on top. No Terminal or extra installs needed.
 
+Developed by **[c-na.dev](https://c-na.dev)**.
+
 > Not affiliated with Apple. iCloud is a trademark of Apple Inc.
 
 ## Features
@@ -155,5 +157,10 @@ Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 [MIT](LICENSE). Bundled third-party software is listed in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Credits
+
+Developed by **[c-na.dev](https://c-na.dev)**. Downloading is powered by [icloudpd], by its
+open-source contributors.
 
 [icloudpd]: https://github.com/icloud-photos-downloader/icloud_photos_downloader

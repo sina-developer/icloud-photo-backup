@@ -62,6 +62,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: "About iCloud Photo Backup",
                         action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let site = NSMenuItem(title: "Visit c-na.dev", action: #selector(openDeveloperSite(_:)), keyEquivalent: "")
+        site.target = self
+        appMenu.addItem(site)
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Hide iCloud Photo Backup", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(.separator())
@@ -206,6 +209,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         default:
             break
         }
+    }
+
+    // Links with target="_blank" open in the default browser.
+    func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration,
+                 for action: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
+        if let url = action.request.url, ["http", "https"].contains(url.scheme ?? "") {
+            NSWorkspace.shared.open(url)
+        }
+        return nil
+    }
+
+    @objc func openDeveloperSite(_ sender: Any?) {
+        NSWorkspace.shared.open(URL(string: "https://c-na.dev")!)
     }
 
     // MARK: JS alert/confirm as native sheets

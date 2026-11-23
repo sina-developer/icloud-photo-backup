@@ -71,7 +71,7 @@ cat > "$APP/Contents/Info.plist" <<EOF
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSHumanReadableCopyright</key><string>MIT License. Not affiliated with Apple Inc.</string>
+  <key>NSHumanReadableCopyright</key><string>Developed by c-na.dev · MIT License. Not affiliated with Apple Inc.</string>
 </dict></plist>
 EOF
 

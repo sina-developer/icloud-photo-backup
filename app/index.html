@@ -20,6 +20,13 @@
   .wrap { max-width: 980px; margin: 0 auto; padding: 28px 20px 48px; }
   header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
   h1 { font-size: 22px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .brand { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .byline { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .byline a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  .byline a:hover { text-decoration: underline; }
+  .byline .ver { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 99px;
+                 background: var(--track); color: var(--text); }
+  .byline .ver:empty { display: none; }
   h2 { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 12px; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -96,7 +103,7 @@
   details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
   .hidden { display: none !important; }
   /* Inside the Mac app window: title lives in the title bar, and the page feels like an app. */
-  html.native h1 { visibility: hidden; }
+  html.native h1 { display: none; }  /* the window title bar already shows the name */
   html.native .wrap { padding-top: 16px; }
   html.native body { -webkit-user-select: none; user-select: none; cursor: default; }
   html.native input, html.native .log { -webkit-user-select: text; user-select: text; }
@@ -109,7 +116,13 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>iCloud Photo Backup</h1>
+    <div class="brand">
+      <h1>iCloud Photo Backup</h1>
+      <div class="byline">
+        <span id="version" class="ver"></span>
+        <span>Developed by <a href="https://c-na.dev" target="_blank" rel="noopener">c-na.dev</a></span>
+      </div>
+    </div>
     <div class="row">
       <button id="openFolder" title="Show the backup folder in Finder">Show in Finder</button>
       <button id="quit" class="danger" title="Stop the download and close the app">Quit</button>
@@ -234,10 +247,6 @@
     <div class="thumbs" id="thumbs"></div>
     <div class="empty" id="noThumbs">Photos will appear here as they arrive.</div>
   </section>
-
-  <footer class="note" style="text-align:center;margin-top:4px">
-    iCloud Photo Backup <span id="version"></span> · open source, built on icloudpd · not affiliated with Apple
-  </footer>
 
   <section class="card">
     <details id="logBox">

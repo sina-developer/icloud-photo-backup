@@ -6,6 +6,10 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- "Developed by c-na.dev" credit in the app header, About box and app menu (Visit c-na.dev), README and cover image.
+- Links in the app now open in your default browser.
+
 ## [1.0.1] - 2026-11-23
 
 ### Fixed
@@ -32,6 +36,7 @@ First public release.
 - Options for videos, Live Photo videos, Advanced Data Protection and folder layout.
 - Native folder picker, with a warning when the folder is on the Mac's internal disk.
 
-[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/sina-developer/icloud-photo-backup/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/sina-developer/icloud-photo-backup/releases/tag/v1.0.0
