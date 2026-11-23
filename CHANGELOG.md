@@ -6,6 +6,8 @@ and the project uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-23
+
 ### Added
 - "Developed by c-na.dev" credit in the app header, About box and app menu (Visit c-na.dev), README and cover image.
 - Links in the app now open in your default browser.
